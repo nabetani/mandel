@@ -18,7 +18,7 @@ std::uint8_t colu(double t0) {
 }
 
 cv::Vec3b color(int i) {
-  double t = std::log(1.0 + i);
+  double t = std::log(1.0 + i)*1.5;
   return {colu(t), colu(t + 1), colu(t + 2)};
 }
 
@@ -26,11 +26,12 @@ class mandel_maker {
 
   cv::Vec3b pix_at(double x, double y) {
     complex z{0.0, 0.0};
-    complex c{x, y};
-    for (int i = 0; i < N; ++i) {
-      z = std::pow(z, std::abs(z) / 2 + 2) + c;
+    auto c = complex{x, y};
+    auto rot = std::polar(1.0,PI/8);
+    for (int ix = 0; ix < N; ++ix) {
+      z = std::pow(z, 2-ix*0.0001+std::abs(z))+c;
       if (10.0 < std::abs(z)) {
-        return color(i);
+        return color(ix);
       }
     }
     return {0, 0, 0};
@@ -59,7 +60,8 @@ public:
 };
 
 cv::Rect2d rect(char const *cmd) {
-  cv::Rect2d r(-1, -1, 2, 2);
+  double w0 = 1<<5;
+  cv::Rect2d r(-w0 / 2, -w0 / 2, w0, w0);
   for (; *cmd; ++cmd) {
     double x, y;
     double w = r.width / 2;
