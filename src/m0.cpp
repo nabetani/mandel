@@ -28,10 +28,9 @@ class mandel_maker {
   cv::Vec3b pix_at(double x, double y) {
     complex z{0.0, 0.0};
     auto c = complex{x, y};
-    auto rot = std::polar(1.0,PI/8);
     for (int ix = 0; ix < N; ++ix) {
-      z = std::pow(z, 2-ix*0.0001+std::abs(z))+c;
-      if (10.0 < std::abs(z)) {
+      z = z*z + c;
+      if (2.0 < std::abs(z)) {
         return color(ix);
       }
     }
