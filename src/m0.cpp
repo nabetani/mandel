@@ -5,7 +5,7 @@
 #include <opencv2/opencv.hpp>
 
 using complex = std::complex<double>;
-constexpr int N = 10000;
+constexpr int N = 100000;
 constexpr double PI = 3.14159'26535'89793'23846'26433'83279'50288;
 
 std::uint8_t colu(double t0) {
@@ -18,23 +18,23 @@ std::uint8_t colu(double t0) {
   }
 }
 
-cv::Vec3b color(int i) {
-  double t = std::log(1.0 + i)*1.5;
+cv::Vec3b color(double t0) {
+  double t = std::log(t0 + 1);
   return {colu(t), colu(t + 1), colu(t + 2)};
 }
 
 class mandel_maker {
 
-  cv::Vec3b pix_at(double x, double y) {
+  int32_t pix_at(double x, double y) {
     complex z{0.0, 0.0};
     auto c = complex{x, y};
     for (int ix = 0; ix < N; ++ix) {
-      z = z*z + c;
+      z = z * z + c;
       if (2.0 < std::abs(z)) {
-        return color(ix);
+        return ix;
       }
     }
-    return {0, 0, 0};
+    return -1;
   }
   int w, h;
   double x0, dx;
@@ -45,14 +45,14 @@ public:
       : w(w_), h(h_), x0(x0_), dx((x1_ - x0_) / w_), y0(y0_),
         dy((x1_ - x0_) * h_ / w_ / h_) {}
   cv::Mat make() {
-    cv::Mat im = cv::Mat::zeros(w, h, CV_8UC3);
+    cv::Mat im = cv::Mat::zeros(w, h, CV_32S);
 #pragma omp parallel for
     for (int iy = 0; iy < h; ++iy) {
       double y = y0 + dy * iy;
       for (int ix = 0; ix < w; ++ix) {
         double x = x0 + ix * dx;
         auto col = pix_at(x, y);
-        im.at<cv::Vec3b>(iy, ix) = col;
+        im.at<std::int32_t>(iy, ix) = col;
       }
     }
     return im;
@@ -60,7 +60,7 @@ public:
 };
 
 cv::Rect2d rect(char const *cmd) {
-  double w0 = 1<<5;
+  double w0 = 1 << 5;
   cv::Rect2d r(-w0 / 2, -w0 / 2, w0, w0);
   for (; *cmd; ++cmd) {
     double x, y;
@@ -94,6 +94,47 @@ cv::Rect2d rect(char const *cmd) {
   return r;
 }
 
+void save_image(char const *filename, cv::Mat const &im) {
+  cv::FileStorage fs(filename, cv::FileStorage::WRITE);
+  fs << "image" << im;
+}
+
+std::pair<std::int32_t, std::int32_t> find_minmax(cv::Mat const &im) {
+  int min = INT32_MAX;
+  int max = INT32_MIN;
+  auto end = im.end<std::int32_t>();
+  for (auto it = im.begin<std::int32_t>(); it != end; ++it) {
+    int32_t col = *it;
+    if (col < 0) {
+      continue;
+    }
+    if (col < min) {
+      min = col;
+    }
+    if (max < col) {
+      max = col;
+    }
+  }
+  return {min, max};
+}
+
+cv::Mat colorize(cv::Mat const &src) {
+  auto [min, max] = find_minmax(src);
+  cv::Mat dest = cv::Mat::zeros(src.rows, src.cols, CV_8UC3);
+  double colfactor = 255.0 / (max - min);
+  for (int y = 0; y < src.rows; ++y) {
+    for (int x = 0; x < src.cols; ++x) {
+      auto col{src.at<std::int32_t>(y, x)};
+      if (col < 0) {
+        dest.at<cv::Vec3b>(y, x) = {0, 0, 0};
+      } else {
+        dest.at<cv::Vec3b>(y, x) = color(col);
+      }
+    }
+  }
+  return dest;
+}
+
 int main(int argc, char const *argv[]) {
   double realsize = argc < 2 ? 100.0 : std::atof(argv[1]); // size in mm
   omp_set_num_threads(16);
@@ -101,5 +142,6 @@ int main(int argc, char const *argv[]) {
   cv::Rect2d rc = rect(argc < 3 ? "" : argv[2]);
   auto mm = mandel_maker(pix, pix, rc.x, rc.br().x, rc.y);
   cv::Mat im = mm.make();
-  cv::imwrite("data/hoge.png", im);
+  cv::imwrite("data/hoge.png", colorize(im));
+  save_image("data/hoge.yaml", im);
 }
