@@ -29,19 +29,19 @@ class mandel_maker {
     complex z{0.0, 0.0};
     auto c = complex{x, y};
     std::vector<cv::Point2f> points;
-    points.reserve( rep );
-
+    points.reserve(rep);
     for (int ix = 0; ix < rep; ++ix) {
-      z = z * z + c;
-      points.emplace_back( cv::Point2f( real(z), imag(z) ) );
+      z = (std::exp(z) - 1.0) * 2.0 + c;
+
+      points.emplace_back(cv::Point2f(real(z), imag(z)));
       if (20.0 < std::abs(z)) {
         return {static_cast<double>(ix), std::arg(z), std::abs(z)};
       }
     }
     std::vector<cv::Point2f> hull;
-    cv::convexHull( points, hull );
-    auto area = cv::contourArea( hull );
-    return {-1, std::arg(z),  area};
+    cv::convexHull(points, hull);
+    auto area = cv::contourArea(hull);
+    return {-1, std::arg(z), area};
   }
   int rep;
   int w, h;
