@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <omp.h>
 #include <opencv2/opencv.hpp>
+#include <vector>
 
 using complex = std::complex<double>;
 constexpr double PI = 3.14159'26535'89793'23846'26433'83279'50288;
@@ -27,14 +28,20 @@ class mandel_maker {
   cv::Vec3d pix_at(double x, double y) {
     complex z{0.0, 0.0};
     auto c = complex{x, y};
+    std::vector<cv::Point2f> points;
+    points.reserve( rep );
+
     for (int ix = 0; ix < rep; ++ix) {
-      // z = std::pow(z, 2 - ix * 0.0001 + std::sin(std::arg(z))) + c;
       z = z * z + c;
+      points.emplace_back( cv::Point2f( real(z), imag(z) ) );
       if (20.0 < std::abs(z)) {
         return {static_cast<double>(ix), std::arg(z), std::abs(z)};
       }
     }
-    return {-1, std::arg(z), std::abs(z)};
+    std::vector<cv::Point2f> hull;
+    cv::convexHull( points, hull );
+    auto area = cv::contourArea( hull );
+    return {-1, std::arg(z),  area};
   }
   int rep;
   int w, h;
@@ -121,17 +128,19 @@ std::pair<std::int32_t, std::int32_t> find_minmax(cv::Mat const &im) {
 }
 
 cv::Mat colorize(cv::Mat const &src) {
-  auto [min, max] = find_minmax(src);
   cv::Mat dest = cv::Mat::zeros(src.rows, src.cols, CV_8UC3);
   for (int y = 0; y < src.rows; ++y) {
     for (int x = 0; x < src.cols; ++x) {
       auto col{src.at<cv::Vec3d>(y, x)};
       if (col[0] < 0) {
-        dest.at<cv::Vec3b>(y, x) = color(col[1] / (PI * 2) * 3*16 + 3*16) /2;
+        auto c0 = color((col[2]*1000 + col[1] / (PI*2) * 3 + 3)*3)/2;
+        //auto c0 = color(col[1] / (PI*2) * 3 + 3 ) / 2;
+        dest.at<cv::Vec3b>(y, x) = c0;
       } else {
         auto c0 = cv::Vec3b{255,255,255} - color(col[1] / (PI * 2) * 3 + 3);
-        auto c1 = cv::Vec3b{255,255,255} - color(col[0]*0.01);
-        dest.at<cv::Vec3b>(y, x) = (c0*0.3+c1*0.7);
+        auto c1 = cv::Vec3b{255, 255, 255} - color(col[0] * 0.003);
+        constexpr double W = 0.2;
+        dest.at<cv::Vec3b>(y, x) = c0*W + c1*(1-W);
       }
     }
   }
