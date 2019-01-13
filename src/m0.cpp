@@ -31,10 +31,10 @@ class mandel_maker {
     std::vector<cv::Point2f> points;
     points.reserve(rep);
     for (int ix = 0; ix < rep; ++ix) {
-      z = (std::exp(z) - 1.0) * 2.0 + c;
+      z = (std::exp(z) - 1.0 - z*0.6) * 2.0 + c;
 
       points.emplace_back(cv::Point2f(real(z), imag(z)));
-      if (20.0 < std::abs(z)) {
+      if (40.0 < std::abs(z)) {
         return {static_cast<double>(ix), std::arg(z), std::abs(z)};
       }
     }
@@ -138,7 +138,7 @@ cv::Mat colorize(cv::Mat const &src) {
         dest.at<cv::Vec3b>(y, x) = c0;
       } else {
         auto c0 = cv::Vec3b{255, 255, 255} - color(col[1] / (PI * 2) * 3 + 3);
-        auto c1 = cv::Vec3b{255, 255, 255} - color(col[0] * 0.03);
+        auto c1 = cv::Vec3b{255, 255, 255} - color(col[0] * 0.01+1);
         constexpr double W = 0.2;
         dest.at<cv::Vec3b>(y, x) = c0 * W + c1 * (1 - W);
       }
