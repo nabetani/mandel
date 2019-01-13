@@ -10,7 +10,7 @@ using complex = std::complex<double>;
 constexpr double PI = 3.14159'26535'89793'23846'26433'83279'50288;
 
 std::uint8_t colu(double t0) {
-  double t = std::fmod(t0, 3.0);
+  double t = std::fmod(std::fmod(t0, 3.0)+3.0, 3.0);
   if (t < 2) {
     return static_cast<std::uint8_t>(
         std::lround((1 - std::cos(t * PI)) * (255 / 2.0)));
