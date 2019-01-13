@@ -24,6 +24,15 @@ cv::Vec3b color(double t0) {
   return {colu(t), colu(t + 1), colu(t + 2)};
 }
 
+double abslog(double x){
+  if ( x==0 ){
+    return 0;
+  }
+  auto l = std::log(std::abs(x)+1);
+  auto sign = x<0 ? -1 : 1;
+  return l*sign;
+}
+
 class mandel_maker {
   cv::Vec3d pix_at(double x, double y) {
     complex z{0.0, 0.0};
@@ -31,12 +40,9 @@ class mandel_maker {
     std::vector<cv::Point2f> points;
     points.reserve(rep);
     for (int ix = 0; ix < rep; ++ix) {
-      z = (std::exp(z) - 1.0 - z*0.6) * 2.0 + c;
-
-      points.emplace_back(cv::Point2f(real(z), imag(z)));
-      if (40.0 < std::abs(z)) {
-        return {static_cast<double>(ix), std::arg(z), std::abs(z)};
-      }
+      //z = (std::exp(z) - 1.0 - z*0.6) * 2.0 + c;
+      z=z*z+c;
+      points.emplace_back(cv::Point2f(abslog(real(z)), abslog(imag(z))));
     }
     std::vector<cv::Point2f> hull;
     cv::convexHull(points, hull);
@@ -134,7 +140,8 @@ cv::Mat colorize(cv::Mat const &src) {
     for (int x = 0; x < src.cols; ++x) {
       auto col{src.at<cv::Vec3d>(y, x)};
       if (col[0] < 0) {
-        auto c0 = color((col[2]*0.1 + col[1] / (PI * 2) * 3 + 3) * 3) / 2;
+        //auto c0 = color((col[2]*0.1 + col[1] / (PI * 2) * 3 + 3) * 3) / 2;
+        auto c0 = color(std::log(col[2]+0.01));
         dest.at<cv::Vec3b>(y, x) = c0;
       } else {
         auto c0 = cv::Vec3b{255, 255, 255} - color(col[1] / (PI * 2) * 3 + 3);
