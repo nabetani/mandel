@@ -10,7 +10,7 @@ using complex = std::complex<double>;
 constexpr double PI = 3.14159'26535'89793'23846'26433'83279'50288;
 
 std::uint8_t colu(double t0) {
-  double t = std::fmod(std::fmod(t0, 3.0)+3.0, 3.0);
+  double t = std::fmod(std::fmod(t0, 3.0) + 3.0, 3.0);
   if (t < 2) {
     return static_cast<std::uint8_t>(
         std::lround((1 - std::cos(t * PI)) * (255 / 2.0)));
@@ -24,13 +24,13 @@ cv::Vec3b color(double t0) {
   return {colu(t), colu(t + 1), colu(t + 2)};
 }
 
-double abslog(double x){
-  if ( x==0 ){
+double abslog(double x) {
+  if (x == 0) {
     return 0;
   }
-  auto l = std::log(std::abs(x)+1);
-  auto sign = x<0 ? -1 : 1;
-  return l*sign;
+  auto l = std::log(std::abs(x) + 1);
+  auto sign = x < 0 ? -1 : 1;
+  return l * sign;
 }
 
 class mandel_maker {
@@ -40,8 +40,8 @@ class mandel_maker {
     std::vector<cv::Point2f> points;
     points.reserve(rep);
     for (int ix = 0; ix < rep; ++ix) {
-      //z = (std::exp(z) - 1.0 - z*0.6) * 2.0 + c;
-      z=z*z+c;
+      // z = (std::exp(z) - 1.0 - z*0.6) * 2.0 + c;
+      z = z * z + c;
       points.emplace_back(cv::Point2f(abslog(real(z)), abslog(imag(z))));
     }
     std::vector<cv::Point2f> hull;
@@ -140,12 +140,12 @@ cv::Mat colorize(cv::Mat const &src) {
     for (int x = 0; x < src.cols; ++x) {
       auto col{src.at<cv::Vec3d>(y, x)};
       if (col[0] < 0) {
-        //auto c0 = color((col[2]*0.1 + col[1] / (PI * 2) * 3 + 3) * 3) / 2;
-        auto c0 = color(std::log(col[2]+0.01));
+        // auto c0 = color((col[2]*0.1 + col[1] / (PI * 2) * 3 + 3) * 3) / 2;
+        auto c0 = color(std::log(col[2] + 0.01));
         dest.at<cv::Vec3b>(y, x) = c0;
       } else {
         auto c0 = cv::Vec3b{255, 255, 255} - color(col[1] / (PI * 2) * 3 + 3);
-        auto c1 = cv::Vec3b{255, 255, 255} - color(col[0] * 0.01+1);
+        auto c1 = cv::Vec3b{255, 255, 255} - color(col[0] * 0.01 + 1);
         constexpr double W = 0.2;
         dest.at<cv::Vec3b>(y, x) = c0 * W + c1 * (1 - W);
       }
@@ -219,7 +219,7 @@ int colorize(int argc, char const *argv[]) {
     auto outfile = vm["outfile"].as<std::string>();
     std::cout << infile << ", " << outfile << "\n";
 
-    cv::FileStorage fs( infile, cv::FileStorage::READ);
+    cv::FileStorage fs(infile, cv::FileStorage::READ);
     cv::Mat im;
     fs["image"] >> im;
     cv::imwrite(outfile, colorize(im));
