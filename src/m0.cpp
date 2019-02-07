@@ -156,7 +156,7 @@ cv::Mat colorize(cv::Mat const &src) {
         dest.at<cv::Vec3b>(y, x) = c0 / 2;
       } else {
         auto c0 = cv::Vec3b{255, 255, 255} - color(col[1] / (PI * 2) * 3 + 3);
-        auto c1 = cv::Vec3b{255, 255, 255} - color(col[0] * 0.05 + 1);
+        auto c1 = cv::Vec3b{255, 255, 255} - color(col[0] * 0.006 + 1);
         constexpr double W = 0.2;
         dest.at<cv::Vec3b>(y, x) = c0 * W + c1 * (1 - W);
       }
