@@ -10,7 +10,7 @@ find_package(Boost 1.68.0 COMPONENTS system program_options)
 
 set(CMAKE_CXX_STANDARD 17) # C++17
 
-set(CMAKE_CXX_FLAGS "-O2 -Wall -Xpreprocessor -fopenmp -lomp")
+set(CMAKE_CXX_FLAGS "-O2 -g -Wall -Xpreprocessor -fopenmp -lomp")
 
 cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
 
